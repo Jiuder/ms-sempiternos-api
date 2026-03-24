@@ -23,7 +23,7 @@ const config: Config = {
     '^@config/(.*)$': '<rootDir>/config/$1',
     '^@shared/(.*)$': '<rootDir>/shared/$1',
     '^@redis/(.*)$': '<rootDir>/redis/$1',
-    '^@logs/(.*)$': '<rootDir>/logs/$1',
+    '^@logs/(.*)$': '<rootDir>/logs-services/$1',
     '^@stats/(.*)$': '<rootDir>/stats/$1',
     '^@swagger/(.*)$': '<rootDir>/swagger/$1',
     '^@filter-history/(.*)$': '<rootDir>/filter-history/$1',
