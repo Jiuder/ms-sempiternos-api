@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+npm-debug.log
+large-logs.txt
+Dockerfile
+docker-compose.yml
+.env
+.gemini
