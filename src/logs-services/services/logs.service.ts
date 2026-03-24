@@ -22,7 +22,6 @@ export class LogsService {
   ) {}
 
   private static readonly BATCH_SIZE = 1000;
-  private batchBuffer: LogEntry[] = [];
 
   public async ingestOne(dto: IngestLogDto): Promise<LogResponseDto> {
     const id = dto.id ?? crypto.randomUUID();
@@ -39,25 +38,29 @@ export class LogsService {
     const result: StreamResult = { processed: 0, duplicates: 0, errors: 0 };
     const rl = createInterface({ input: readable, crlfDelay: Infinity });
 
-    this.batchBuffer = [];
+    const batchBuffer: LogEntry[] = [];
     for await (const line of rl) {
-      await this.processStreamLine(line, result);
+      await this.processStreamLine(line, result, batchBuffer);
     }
 
-    if (this.batchBuffer.length > 0) {
-      await this.flushBatch();
+    if (batchBuffer.length > 0) {
+      await this.flushBatch(batchBuffer);
     }
 
     return result;
   }
 
-  private async processStreamLine(line: string, result: StreamResult): Promise<void> {
+  private async processStreamLine(
+    line: string,
+    result: StreamResult,
+    batchBuffer: LogEntry[],
+  ): Promise<void> {
     const trimmed = this.normalizeLine(line);
     if (!trimmed) return;
 
     try {
       const parsed = JSON.parse(trimmed) as unknown;
-      await this.processParsedItems(parsed, result);
+      await this.processParsedItems(parsed, result, batchBuffer);
     } catch {
       result.errors++;
       this.logger.warn(`Skipping malformed line: ${trimmed.slice(0, 80)}`);
@@ -71,31 +74,39 @@ export class LogsService {
     return trimmed;
   }
 
-  private async processParsedItems(parsed: unknown, result: StreamResult): Promise<void> {
+  private async processParsedItems(
+    parsed: unknown,
+    result: StreamResult,
+    batchBuffer: LogEntry[],
+  ): Promise<void> {
     const items = Array.isArray(parsed) ? parsed : [parsed];
     for (const raw of items as IngestLogDto[]) {
-      await this.ingestStreamItem(raw, result);
+      await this.ingestStreamItem(raw, result, batchBuffer);
     }
   }
 
-  private async ingestStreamItem(raw: IngestLogDto, result: StreamResult): Promise<void> {
+  private async ingestStreamItem(
+    raw: IngestLogDto,
+    result: StreamResult,
+    batchBuffer: LogEntry[],
+  ): Promise<void> {
     const id = raw.id ?? crypto.randomUUID();
     const isDuplicate = this.slidingWindowSet.add(id);
     if (isDuplicate) result.duplicates++;
 
     const entry = this.buildEntry({ ...raw, id }, isDuplicate);
-    this.batchBuffer.push(entry);
+    batchBuffer.push(entry);
 
-    if (this.batchBuffer.length >= LogsService.BATCH_SIZE) {
-      await this.flushBatch();
+    if (batchBuffer.length >= LogsService.BATCH_SIZE) {
+      await this.flushBatch(batchBuffer);
+      batchBuffer.length = 0;
     }
 
     result.processed++;
   }
 
-  private async flushBatch(): Promise<void> {
-    const batch = [...this.batchBuffer];
-    this.batchBuffer = [];
+  private async flushBatch(batchBuffer: LogEntry[]): Promise<void> {
+    const batch = [...batchBuffer];
 
     const statsUpdates = batch.map((entry) => ({
       message: entry.message,
