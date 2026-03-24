@@ -1,0 +1,27 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": [
+      "@swc/jest",
+      {
+        "jsc": {
+          "parser": { "syntax": "typescript", "decorators": true },
+          "transform": { "legacyDecorator": true, "decoratorMetadata": true }
+        }
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^@src/(.*)$": "<rootDir>/../src/$1",
+    "^@config/(.*)$": "<rootDir>/../src/config/$1",
+    "^@shared/(.*)$": "<rootDir>/../src/shared/$1",
+    "^@redis/(.*)$": "<rootDir>/../src/redis/$1",
+    "^@logs/(.*)$": "<rootDir>/../src/logs-services/$1",
+    "^@stats/(.*)$": "<rootDir>/../src/stats/$1",
+    "^@swagger/(.*)$": "<rootDir>/../src/swagger/$1",
+    "^@filter-history/(.*)$": "<rootDir>/../src/filter-history/$1"
+  }
+}

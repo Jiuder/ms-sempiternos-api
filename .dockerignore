@@ -7,3 +7,6 @@ Dockerfile
 docker-compose.yml
 .env
 .gemini
+scripts
+test
+large-logs.ndjson

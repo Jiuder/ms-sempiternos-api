@@ -134,11 +134,19 @@ curl -X POST http://localhost:3000/logs/ingest/stream \
 
 ## 🔧 Maintenance & Quality Control
 
-### Running Tests
-Ensure 100% coverage before any deployment:
+### Running E2E Tests
+End-to-End tests verify the full HTTP pipeline, including streaming and actual Redis connectivity:
 ```bash
-npm run test:cov
+# Requires a running Redis instance
+npm run test:e2e
 ```
+
+### CI/CD Pipeline
+The project includes a **GitHub Actions** workflow (`.github/workflows/ci.yml`) that automatically:
+1.  Spins up a **Redis 7** service container.
+2.  Installs dependencies using `npm ci`.
+3.  Executes `npm run lint` to enforce complexity and style rules.
+4.  Runs all **Unit Tests** and **E2E Tests** on each push to `main`.
 
 ### Linting & Formatting
 The project enforces a complexity limit of **6** per function:
